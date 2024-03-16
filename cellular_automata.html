@@ -1,0 +1,137 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Hello World</title>
+</head>
+<body>
+  <lable>Height:</lable>
+  <input id="height" type="number" min="50" max="500" step="25" value="500">
+  <lable>Width:</lable>
+  <input id="width" type="number" min="50" max="500" step="25" value="500">
+  <lable>Cell Size:</lable>
+  <input id="cell_size" type="number" min="5" max="50" step="5" value="50">
+  <button id="reset">Reset</button>
+
+  <div id="main" ></div>
+
+  <script src="pixi.js"></script>
+  <script type="text/javascript">
+    var cell_size=50
+    var width=500,height=500
+    var clicked=false,allow_interactive=true,current_click=null,alive_context=null
+    var rows=[]
+
+    
+    document.querySelector('#reset').onclick= (event)=> {
+      console.log("grid has been reset")
+      draw_grid(width,height,cell_size)
+     }
+    document.querySelector('#height').onchange= (event)=> {
+      console.log("height is ",height)
+      height=event.srcElement.valueAsNumber
+      draw_grid(width,height,cell_size)
+     }
+     document.querySelector('#width').onchange= (event)=> {
+      console.log("width is ",cell_size)
+      width=event.srcElement.valueAsNumber
+      draw_grid(width,height,cell_size)
+     }
+     document.querySelector('#cell_size').onchange= (event)=> {
+      cell_size=event.srcElement.valueAsNumber
+
+      console.log("cell size is ",cell_size,event)
+
+      draw_grid(width,height,cell_size)
+     }
+var draw_grid=  async function (width,height,cell_size=3) 
+{
+    // Create a new application
+    console.log("drawing grid with the following values width=",width,",height =",height,",cell_size",cell_size)
+    const app = new PIXI.Application();
+
+    // Initialize the application
+    await app.init({ background: '#1099bb', width: width, height: height  });
+    var canvas=document.querySelector('canvas')
+    if(canvas){
+      canvas.remove()
+    }
+    // Append the application canvas to the document body
+    document.querySelector('#main').appendChild(app.canvas);
+    
+    // Create and add a container to the stage
+    const container = new PIXI.Container();
+
+    app.stage.addChild(container);
+   
+
+  
+  let squareOff = new PIXI.GraphicsContext()
+  .rect(0, 0, cell_size, cell_size)
+  .fill(0xff0000)
+  .stroke({width:2, color:'black'})
+
+  let squareOn = new PIXI.GraphicsContext()
+  .rect(0, 0, cell_size, cell_size)
+  .fill(0xffff00)
+  .stroke({width:2, color:'black'})
+   var contexts=[
+   squareOff,
+   squareOn
+   ]
+   alive_context=squareOn
+   rows=[]
+  for(let i=0;i<height;i+=cell_size){
+    
+    var column=[]
+    for (let j=0;j<width;j+=cell_size){
+      let duplicate = new PIXI.Graphics(squareOff);
+      duplicate.x=i
+      duplicate.y=j
+      duplicate.interactive=true
+      app.stage.addChild(duplicate);
+      duplicate.on('mousedown', (event) => 
+      {
+        if(allow_interactive)
+        {
+        duplicate.context=contexts.filter((state)=>state!==duplicate.context)[0];
+        current_click=duplicate.context
+        clicked=true
+        }
+       });
+       duplicate.on('mouseover', (event) => 
+      {
+        if(clicked && allow_interactive && current_click){
+        duplicate.context=current_click;
+        }
+       });
+       duplicate.on('mouseup', (event) => 
+      {
+        if(allow_interactive)
+        {
+        clicked=false
+        }
+       });
+       column.push(duplicate)
+    }
+    rows.push(column)
+  }
+var elapsedtime=0
+app.ticker.add((deltaTime) => {
+  //console.log(deltaTime)
+
+  if(!allow_interactive)
+  {
+    console.log(rows.map((row)=> row.map((element)=> element.context==alive_context )  ))
+    allow_interactive=!allow_interactive
+  }
+});
+   
+};
+draw_grid(width,height,cell_size)
+
+
+    
+  </script>
+</body>
+</html>
